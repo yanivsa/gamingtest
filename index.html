@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>משחק פונג עם מתמלל בזמן אמת</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 400px;
+            width: 100%;
+        }
+        .card-header {
+            margin-bottom: 20px;
+        }
+        .card-title {
+            font-size: 1.5em;
+            margin: 0;
+        }
+        .button {
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .transcript {
+            height: 100px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        canvas {
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">מתמלל בזמן אמת עם משחק פונג איטי מאוד ושליטה מהירה</h2>
+        </div>
+        <div class="card-content">
+            <button id="listenButton" class="button">התחל האזנה</button>
+            <div id="transcript" class="transcript"></div>
+            <canvas id="gameCanvas" width="300" height="300"></canvas>
+            <p id="score">ניקוד: שחקן: 0, מחשב: 0</p>
+            <p>הוראות: השתמש בחצים שמאלה וימינה כדי להזיז את המחבט האדום במהירות</p>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const listenButton = document.getElementById('listenButton');
+        const transcriptDiv = document.getElementById('transcript');
+        const scoreP = document.getElementById('score');
+
+        let ballPos = { x: 150, y: 100 };
+        let ballSpeed = { x: 0.05, y: 0.05 };
+        let playerPos = { x: 137.5 };
+        let computerPos = { x: 137.5 };
+        let score = { player: 0, computer: 0 };
+        const paddleWidth = 25;
+        const paddleHeight = 5;
+
+        function drawGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw ball
+            ctx.beginPath();
+            ctx.arc(ballPos.x, ballPos.y, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#0000FF';
+            ctx.fill();
+            ctx.closePath();
+
+            // Draw player paddle
+            ctx.beginPath();
+            ctx.rect(playerPos.x, canvas.height - 10, paddleWidth, paddleHeight);
+            ctx.fillStyle = '#FF0000';
+            ctx.fill();
+            ctx.closePath();
+
+            // Draw computer paddle
+            ctx.beginPath();
+            ctx.rect(computerPos.x, 5, paddleWidth, paddleHeight);
+            ctx.fillStyle = '#00FF00';
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function updateGame() {
+            // Move ball
+            ballPos.x += ballSpeed.x;
+            ballPos.y += ballSpeed.y;
+
+            // Move computer paddle (simple AI)
+            const computerCenter = computerPos.x + paddleWidth / 2;
+            if (Math.abs(computerCenter - ballPos.x) > 2) {
+                computerPos.x += ballPos.x > computerCenter ? 0.1 : -0.1;
+            }
+
+            // Ball collision with walls
+            if (ballPos.x <= 5 || ballPos.x >= canvas.width - 5) {
+                ballSpeed.x = -ballSpeed.x;
+            }
+
+            // Ball collision with player paddle
+            if (
+                ballPos.y >= canvas.height - 15 &&
+                ballPos.x > playerPos.x &&
+                ballPos.x < playerPos.x + paddleWidth
+            ) {
+                ballSpeed.y = -ballSpeed.y;
+                score.player++;
+                updateScore();
+            }
+
+            // Ball collision with computer paddle
+            if (
+                ballPos.y <= 15 &&
+                ballPos.x > computerPos.x &&
+                ballPos.x < computerPos.x + paddleWidth
+            ) {
+                ballSpeed.y = -ballSpeed.y;
+                score.computer++;
+                updateScore();
+            }
+
+            // Ball out of bounds
+            if (ballPos.y >= canvas.height || ballPos.y <= 0) {
+                ballPos = { x: 150, y: 100 };
+                ballSpeed = { 
+                    x: 0.05 * (Math.random() > 0.5 ? 1 : -1), 
+                    y: 0.05 
+                };
+            }
+        }
+
+        function updateScore() {
+            scoreP.textContent = `ניקוד: שחקן: ${score.player}, מחשב: ${score.computer}`;
+        }
+
+        function gameLoop() {
+            updateGame();
+            drawGame();
+            requestAnimationFrame(gameLoop);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                playerPos.x = Math.max(0, playerPos.x - 15);
+            } else if (e.key === 'ArrowRight') {
+                playerPos.x = Math.min(canvas.width - paddleWidth, playerPos.x + 15);
+            }
+        });
+
+        gameLoop();
+
+        let recognition;
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'he-IL';
+
+            recognition.onresult = (event) => {
+                const result = event.results[event.results.length - 1];
+                const transcriptText = result[0].transcript;
+                transcriptDiv.textContent += ' ' + transcriptText;
+            };
+        } else {
+            console.log('Speech recognition not supported');
+            listenButton.disabled = true;
+        }
+
+        let isListening = false;
+        listenButton.addEventListener('click', () => {
+            if (!isListening) {
+                recognition.start();
+                listenButton.textContent = 'הפסק האזנה';
+            } else {
+                recognition.stop();
+                listenButton.textContent = 'התחל האזנה';
+            }
+            isListening = !isListening;
+        });
+    </script>
+</body>
+</html>
