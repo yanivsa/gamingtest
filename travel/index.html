@@ -4,11 +4,16 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Family Travel Deal Monitor — Sukkot 2026</title>
 <style>
-:root{font-family:Arial,sans-serif;color:#172033;background:#f5f7fb}body{margin:0}.wrap{max-width:1180px;margin:auto;padding:24px}.hero{background:#fff;border-radius:18px;padding:22px;box-shadow:0 8px 28px #17203312;margin-bottom:18px}.hero h1{margin:0 0 8px;font-size:28px}.muted{color:#667085}.status{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.pill{background:#eef2ff;border-radius:999px;padding:7px 11px;font-size:13px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{background:#fff;border-radius:18px;padding:18px;box-shadow:0 8px 28px #17203312}.tag{font-weight:700;font-size:13px;color:#475467}.dest{font-size:22px;font-weight:800;margin:8px 0}.total{font-size:30px;font-weight:900;margin:12px 0}.score{font-weight:700}.line{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #eef0f3}.line:last-child{border:0}.benefits{margin:12px 0;padding-right:18px}.links{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.btn{display:inline-block;text-decoration:none;background:#172033;color:#fff;padding:9px 13px;border-radius:10px}.btn.secondary{background:#eef2f6;color:#172033}.warn{margin-top:16px;background:#fff8e7;padding:12px;border-radius:12px;font-size:13px}.footer{margin:20px 0;color:#667085;font-size:13px}@media(max-width:850px){.grid{grid-template-columns:1fr}.wrap{padding:14px}.hero h1{font-size:24px}}
+:root{font-family:Arial,sans-serif;color:#172033;background:#f5f7fb}body{margin:0}.wrap{max-width:1180px;margin:auto;padding:24px}.hero{background:#fff;border-radius:18px;padding:22px;box-shadow:0 8px 28px #17203312;margin-bottom:18px}.hero h1{margin:0 0 8px;font-size:28px}.muted{color:#667085}.status,.providers{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.pill{background:#eef2ff;border-radius:999px;padding:7px 11px;font-size:13px}.pill.ok{background:#d1fae5;color:#065f46}.pill.missing{background:#fef3c7;color:#92400e}.pill.error{background:#fee2e2;color:#991b1b}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{background:#fff;border-radius:18px;padding:18px;box-shadow:0 8px 28px #17203312}.tag{font-weight:700;font-size:13px;color:#475467}.dest{font-size:22px;font-weight:800;margin:8px 0}.total{font-size:30px;font-weight:900;margin:12px 0}.score{font-weight:700}.line{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #eef0f3}.line:last-child{border:0}.benefits{margin:12px 0;padding-right:18px}.links{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.btn{display:inline-block;text-decoration:none;background:#172033;color:#fff;padding:9px 13px;border-radius:10px}.btn.secondary{background:#eef2f6;color:#172033}.warn{margin-top:16px;background:#fff8e7;padding:12px;border-radius:12px;font-size:13px}.footer{margin:20px 0;color:#667085;font-size:13px}@media(max-width:850px){.grid{grid-template-columns:1fr}.wrap{padding:14px}.hero h1{font-size:24px}}
 </style>
 </head>
 <body><div class="wrap">
-<section class="hero"><h1>מוניטור דילים משפחתי — סוכות 2026</h1><div class="muted">2 מבוגרים + 3 ילדים · חלונות קשיחים 27/28.9 → 1.10 או 2.10 בבוקר</div><div id="status" class="status"></div></section>
+<section class="hero">
+<h1>מוניטור דילים משפחתי — סוכות 2026</h1>
+<div class="muted">2 מבוגרים + 3 ילדים (10, 7, 2) · חלונות קשיחים 27/28.9 → 1.10 או 2.10 בבוקר בלבד</div>
+<div id="status" class="status"></div>
+<div id="providers" class="providers"></div>
+</section>
 <div id="grid" class="grid"></div>
 <div class="warn">המחירים דינמיים. הדף מציג רק נתונים שנשמרו עם מקור אימות וקישור. רכיב שלא אומת אמור להיות מסומן במפורש ולא להיכנס למקום הראשון.</div>
 <div id="footer" class="footer"></div>
@@ -16,8 +21,35 @@
 <script>
 const ils=n=>new Intl.NumberFormat('he-IL',{style:'currency',currency:'ILS',maximumFractionDigits:0}).format(n);
 fetch('./data.json?ts='+Date.now()).then(r=>r.json()).then(d=>{
- const a=d.automation||{}; document.getElementById('status').innerHTML=`<span class="pill">סטטוס: ${a.status||'-'}</span><span class="pill">מצב ספקים: ${a.provider_mode||'-'}</span><span class="pill">אימות חי אחרון: ${a.last_verified_live_refresh||'-'}</span>`;
- document.getElementById('grid').innerHTML=d.deals.map(x=>`<article class="card"><div class="tag">${x.rank}. ${x.category}</div><div class="dest">${x.destination}</div><div class="muted">${x.dates} · ${x.airport}</div><div class="total">${ils(x.total_ils)}</div><div class="score">Family Value ${x.family_value}/100 · ניצול ימים: ${x.time_value}</div><div class="line"><span>✈️ ${x.airline}</span><b>${x.outbound}</b></div><div class="line"><span>↩️ חזרה</span><b>${x.return}</b></div><div class="line"><span>טיסות ל-5</span><b>${ils(x.flight_price_ils)}</b></div><div class="line"><span>${x.hotel} ${'★'.repeat(x.stars)}</span><b>${x.guest_score}</b></div><div class="line"><span>מלון / ${x.rooms}</span><b>${ils(x.hotel_price_ils)}</b></div><div class="line"><span>Effective Vacation Time</span><b>~${x.effective_vacation_hours} שעות</b></div><ul class="benefits">${x.family_benefits.map(b=>`<li>${b}</li>`).join('')}</ul>${x.surprise_reason?`<div class="warn"><b>למה זה מפתיע:</b> ${x.surprise_reason}</div>`:''}<div class="links"><a class="btn" href="${x.flight_url}" target="_blank" rel="noopener">טיסה</a><a class="btn secondary" href="${x.hotel_url}" target="_blank" rel="noopener">מלון</a></div></article>`).join('');
+ const a=d.automation||{};
+ document.getElementById('status').innerHTML=`
+   <span class="pill">סטטוס: ${a.status||'-'}</span>
+   <span class="pill">מצב ספקים: ${a.provider_mode||'-'}</span>
+   <span class="pill">אימות חי אחרון: ${a.last_verified_live_refresh||'-'}</span>
+ `;
+ if(a.providers && a.providers.length){
+   document.getElementById('providers').innerHTML=a.providers.map(p=>{
+     const cls = p.status === 'ok' ? 'ok' : (p.status === 'missing_credentials' ? 'missing' : 'error');
+     const label = p.provider + ': ' + (p.status === 'ok' ? 'פעיל' : (p.status === 'missing_credentials' ? 'ממתין למפתחות' : p.status));
+     return `<span class="pill ${cls}">${label}</span>`;
+   }).join('');
+ }
+ document.getElementById('grid').innerHTML=d.deals.map(x=>`<article class="card">
+   <div class="tag">${x.rank}. ${x.category}</div>
+   <div class="dest">${x.destination}</div>
+   <div class="muted">${x.dates} · ${x.airport}</div>
+   <div class="total">${ils(x.total_ils)}</div>
+   <div class="score">Family Value ${x.family_value}/100 · ניצול ימים: ${x.time_value}</div>
+   <div class="line"><span>✈️ ${x.airline}</span><b>${x.outbound}</b></div>
+   <div class="line"><span>↩️ חזרה</span><b>${x.return}</b></div>
+   <div class="line"><span>טיסות ל-5</span><b>${ils(x.flight_price_ils)}</b></div>
+   <div class="line"><span>${x.hotel} ${'★'.repeat(x.stars||0)}</span><b>${x.guest_score}</b></div>
+   <div class="line"><span>מלון / ${x.rooms}</span><b>${ils(x.hotel_price_ils)}</b></div>
+   <div class="line"><span>Effective Vacation Time</span><b>~${x.effective_vacation_hours} שעות</b></div>
+   <ul class="benefits">${(x.family_benefits||[]).map(b=>`<li>${b}</li>`).join('')}</ul>
+   ${x.surprise_reason?`<div class="warn"><b>למה זה מפתיע:</b> ${x.surprise_reason}</div>`:''}
+   <div class="links"><a class="btn" href="${x.flight_url}" target="_blank" rel="noopener">טיסה</a><a class="btn secondary" href="${x.hotel_url}" target="_blank" rel="noopener">מלון</a></div>
+ </article>`).join('');
  document.getElementById('footer').textContent=`עודכן: ${d.generated_at} · Asia/Jerusalem · GBP/ILS ${d.fx?.GBP_ILS??'-'}`;
 }).catch(e=>{document.getElementById('grid').innerHTML='<div class="card">שגיאה בטעינת הנתונים: '+e.message+'</div>'});
 </script></body></html>
